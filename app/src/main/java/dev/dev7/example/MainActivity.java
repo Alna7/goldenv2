@@ -39,6 +39,46 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint({"SetTextI18n", "UnspecifiedRegisterReceiverFlag"})
     @Override
+   @Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    
+    EditText uuidEditText = findViewById(R.id.uuidEditText);
+    Button connectButton = findViewById(R.id.connectButton);
+    Button disconnectButton = findViewById(R.id.disconnectButton);
+
+    SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+    String savedUuid = prefs.getString("uuid", "");
+    uuidEditText.setText(savedUuid);
+
+    connectButton.setOnClickListener(v -> {
+        String uuid = uuidEditText.getText().toString().trim();
+        if (uuid.isEmpty()) {
+            Toast.makeText(this, "لطفاً UUID را وارد کنید", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        prefs.edit().putString("uuid", uuid).apply();
+
+        String url = "vless://" + uuid + "@185.143.234.120:443" +
+                     "?type=ws&host=app.alnafun.ir&path=/?ed%3D443&security=tls&sni=iau.ac.ir";
+
+        connectToServer(url);
+    });
+
+    disconnectButton.setOnClickListener(v -> disconnectFromServer());
+}
+
+private void connectToServer(String configUrl) {
+    // تابع اتصال واقعی رو باید طبق پروژه بنویسی:
+    V2rayController.startV2ray(configUrl);
+    Toast.makeText(this, "در حال اتصال...", Toast.LENGTH_SHORT).show();
+}
+
+private void disconnectFromServer() {
+    V2rayController.stopV2ray();
+    Toast.makeText(this, "اتصال قطع شد", Toast.LENGTH_SHORT).show();
+} 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
