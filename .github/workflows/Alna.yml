@@ -1,4 +1,4 @@
-name: Build alna APK and Upload
+name: Build alna & Upload Unsigned APK
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -20,17 +20,20 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Make Gradle Executable
+      - name: Grant execute permission to Gradle
         run: chmod +x ./gradlew
 
-      - name: Build Unsigned APK
+      - name: Clean previous builds
+        run: ./gradlew clean
+
+      - name: Build APK (Release)
         run: ./gradlew assembleRelease
 
-      - name: List output files (for debugging)
-        run: ls -R app/build/outputs/apk/release
+      - name: List APK files
+        run: ls -R app/build/outputs/apk/
 
-      - name: Upload Unsigned APK
+      - name: Upload Unsigned APK (if exists)
         uses: actions/upload-artifact@v4
         with:
           name: unsigned-apk
-          path: app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/release/app-release.apk
