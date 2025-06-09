@@ -23,11 +23,7 @@ jobs:
 
       - name: Set repository name as env variable
         run: echo "repository_name=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
-      - name: Setup Android SDK
-  uses: android-actions/setup-android@v2
-  with:
-    api-level: 33
-    build-tools: 33.0.2
+    
 
       - name: Set Up JDK
         uses: actions/setup-java@v4
