@@ -23,8 +23,8 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
 
-      - name: Build APK
-        run: ./gradlew assembleRelease
+      - name: Clean and Build APK
+        run: ./gradlew clean assembleRelease
 
       - name: Sign APK
         run: |
