@@ -1,0 +1,42 @@
+name: Build & Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'  # مثلاً v1.0.0 باعث اجرا میشه
+
+jobs:
+  build:
+    name: Build Signed APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'temurin'
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build Signed APK
+        run: ./gradlew assembleRelease \
+          -Pandroid.injected.signing.store.file=release.keystore \
+          -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+          -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+          -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: app/build/outputs/apk/release/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
