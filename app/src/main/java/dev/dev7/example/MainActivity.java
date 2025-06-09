@@ -1,9 +1,18 @@
 package dev.dev7.example;
 
-import static dev.dev7.lib.v2ray.utils.V2rayConstants.*;
+import static dev.dev7.lib.v2ray.utils.V2rayConstants.SERVICE_CONNECTION_STATE_BROADCAST_EXTRA;
+import static dev.dev7.lib.v2ray.utils.V2rayConstants.SERVICE_DOWNLOAD_SPEED_BROADCAST_EXTRA;
+import static dev.dev7.lib.v2ray.utils.V2rayConstants.SERVICE_DOWNLOAD_TRAFFIC_BROADCAST_EXTRA;
+import static dev.dev7.lib.v2ray.utils.V2rayConstants.SERVICE_DURATION_BROADCAST_EXTRA;
+import static dev.dev7.lib.v2ray.utils.V2rayConstants.SERVICE_UPLOAD_SPEED_BROADCAST_EXTRA;
+import static dev.dev7.lib.v2ray.utils.V2rayConstants.SERVICE_UPLOAD_TRAFFIC_BROADCAST_EXTRA;
+import static dev.dev7.lib.v2ray.utils.V2rayConstants.V2RAY_SERVICE_STATICS_BROADCAST_INTENT;
 
 import android.annotation.SuppressLint;
-import android.content.*;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -35,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             V2rayController.init(this, R.drawable.ic_launcher, "V2ray Android");
+
             connection = findViewById(R.id.btn_connection);
             connection_speed = findViewById(R.id.connection_speed);
             connection_time = findViewById(R.id.connection_duration);
@@ -42,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
             server_delay = findViewById(R.id.server_delay);
             connection_mode = findViewById(R.id.connection_mode);
             connected_server_delay = findViewById(R.id.connected_server_delay);
-            uuid_input = findViewById(R.id.uuid_input);
+            uuid_input = findViewById(R.id.v2ray_config); // ورودی uuid را در همین فیلد دریافت می‌کنیم
             core_version = findViewById(R.id.core_version);
         }
 
@@ -51,15 +61,11 @@ public class MainActivity extends AppCompatActivity {
         connection.setOnClickListener(view -> {
             String userUUID = uuid_input.getText().toString().trim();
 
-            if (userUUID.length() < 30 || !userUUID.matches("^[0-9a-fA-F\\-]{36}$")) {
-                Toast.makeText(this, "UUID is invalid!", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            String config = "vless://" + userUUID +
+                    "@185.143.234.120:443?type=ws&host=app.alnafun.ir&path=/&security=tls&sni=iau.ac.ir#Turkey";
 
-            String config = "[{\\\"v\\\":\\\"2\\\",\\\"ps\\\":\\\"Turkey\\\",\\\"add\\\":\\\"185.143.234.120\\\",\\\"port\\\":\\\"443\\\",\\\"id\\\":\\\"" + userUUID + "\\\",\\\"aid\\\":\\\"0\\\",\\\"net\\\":\\\"ws\\\",\\\"type\\\":\\\"none\\\",\\\"host\\\":\\\"app.alnafun.ir\\\",\\\"path\\\":\\\"/\\\",\\\"tls\\\":\\\"tls\\\",\\\"sni\\\":\\\"iau.ac.ir\\\"}]";
-
-            if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
-                V2rayController.startV2ray(this, "Turkey", config, null);
+            if (V2rayController.getConnectionState() == V2rayConstants.CONNECTION_STATES.DISCONNECTED) {
+                V2rayController.startV2ray(this, "Fixed Server", config, null);
             } else {
                 V2rayController.stopV2ray(this);
             }
@@ -72,18 +78,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         server_delay.setOnClickListener(view -> {
-            String userUUID = uuid_input.getText().toString().trim();
-
-            if (userUUID.length() < 30 || !userUUID.matches("^[0-9a-fA-F\\-]{36}$")) {
-                Toast.makeText(this, "UUID is invalid!", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            String config = "[{\\\"v\\\":\\\"2\\\",\\\"ps\\\":\\\"Turkey\\\",\\\"add\\\":\\\"185.143.234.120\\\",\\\"port\\\":\\\"443\\\",\\\"id\\\":\\\"" + userUUID + "\\\",\\\"aid\\\":\\\"0\\\",\\\"net\\\":\\\"ws\\\",\\\"type\\\":\\\"none\\\",\\\"host\\\":\\\"app.alnafun.ir\\\",\\\"path\\\":\\\"/\\\",\\\"tls\\\":\\\"tls\\\",\\\"sni\\\":\\\"iau.ac.ir\\\"}]";
-
             server_delay.setText("server delay : measuring...");
-            new Handler().postDelayed(() ->
-                    server_delay.setText("server delay : " + V2rayController.getV2rayServerDelay(config) + "ms"), 200);
+            String userUUID = uuid_input.getText().toString().trim();
+            String config = "vless://" + userUUID +
+                    "@185.143.234.120:443?type=ws&host=app.alnafun.ir&path=/&security=tls&sni=iau.ac.ir#Turkey";
+            new Handler().postDelayed(() -> server_delay.setText("server delay : " + V2rayController.getV2rayServerDelay(config) + "ms"), 200);
         });
 
         connection_mode.setOnClickListener(view -> {
@@ -112,7 +111,8 @@ public class MainActivity extends AppCompatActivity {
                     connection_speed.setText("connection speed : " + intent.getExtras().getString(SERVICE_UPLOAD_SPEED_BROADCAST_EXTRA) + " | " + intent.getExtras().getString(SERVICE_DOWNLOAD_SPEED_BROADCAST_EXTRA));
                     connection_traffic.setText("connection traffic : " + intent.getExtras().getString(SERVICE_UPLOAD_TRAFFIC_BROADCAST_EXTRA) + " | " + intent.getExtras().getString(SERVICE_DOWNLOAD_TRAFFIC_BROADCAST_EXTRA));
                     connection_mode.setText("connection mode : " + V2rayConfigs.serviceMode.toString());
-                    switch ((CONNECTION_STATES) Objects.requireNonNull(intent.getExtras().getSerializable(SERVICE_CONNECTION_STATE_BROADCAST_EXTRA))) {
+
+                    switch ((V2rayConstants.CONNECTION_STATES) Objects.requireNonNull(intent.getExtras().getSerializable(SERVICE_CONNECTION_STATE_BROADCAST_EXTRA))) {
                         case CONNECTED:
                             connection.setText("CONNECTED");
                             break;
