@@ -7,18 +7,15 @@ import android.content.*;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
-
+import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.*;
+import java.net.*;
 import java.util.Objects;
 
 import dev.dev7.lib.v2ray.V2rayController;
 import dev.dev7.lib.v2ray.utils.V2rayConfigs;
-import dev.dev7.lib.v2ray.utils.V2rayConstants;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +23,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView connection_speed, connection_traffic, connection_time, server_delay, connected_server_delay, connection_mode, core_version;
     private EditText uuid_input;
     private BroadcastReceiver v2rayBroadCastReceiver;
+
+    private final String CONFIG_URL = "https://example.com/v2ray-config.txt"; // آدرس کانفیگ خودت
 
     @SuppressLint({"SetTextI18n", "UnspecifiedRegisterReceiverFlag"})
     @Override
@@ -49,18 +48,12 @@ public class MainActivity extends AppCompatActivity {
         core_version.setText(V2rayController.getCoreVersion());
 
         connection.setOnClickListener(view -> {
-
             String userUUID = uuid_input.getText().toString().trim();
-
-            String config = "vless://" + userUUID +
-            "@185.143.234.120:443?type=ws&host=app.alnafun.ir&path=/&security=tls&sni=iau.ac.ir#Turkey";
-
-    
-            if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
-                V2rayController.startV2ray(this, "Turkey", config, null);
-            } else {
-                V2rayController.stopV2ray(this);
+            if (userUUID.length() < 30) {
+                Toast.makeText(this, "UUID is invalid", Toast.LENGTH_SHORT).show();
+                return;
             }
+            fetchConfigFromUrlAndStart(userUUID);
         });
 
         connected_server_delay.setOnClickListener(view -> {
@@ -70,18 +63,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         server_delay.setOnClickListener(view -> {
-            String userUUID = uuid_input.getText().toString().trim();
-
-            if (userUUID.length() < 30 || !userUUID.matches("^[0-9a-fA-F\\-]{36}$")) {
-                Toast.makeText(this, "UUID is invalid!", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            String config = "[{\\\"v\\\":\\\"2\\\",\\\"ps\\\":\\\"Turkey\\\",\\\"add\\\":\\\"185.143.234.120\\\",\\\"port\\\":\\\"443\\\",\\\"id\\\":\\\"" + userUUID + "\\\",\\\"aid\\\":\\\"0\\\",\\\"net\\\":\\\"ws\\\",\\\"type\\\":\\\"none\\\",\\\"host\\\":\\\"app.alnafun.ir\\\",\\\"path\\\":\\\"/\\\",\\\"tls\\\":\\\"tls\\\",\\\"sni\\\":\\\"iau.ac.ir\\\"}]";
-
             server_delay.setText("server delay : measuring...");
+            // تست تاخیر فقط زمانی کاربرد داره که کانفیگ لوکال داشته باشی
             new Handler().postDelayed(() ->
-                    server_delay.setText("server delay : " + V2rayController.getV2rayServerDelay(config) + "ms"), 200);
+                    server_delay.setText("server delay : only available after fetching config"), 200);
         });
 
         connection_mode.setOnClickListener(view -> {
@@ -131,6 +116,40 @@ public class MainActivity extends AppCompatActivity {
         } else {
             registerReceiver(v2rayBroadCastReceiver, new IntentFilter(V2RAY_SERVICE_STATICS_BROADCAST_INTENT));
         }
+    }
+
+    private void fetchConfigFromUrlAndStart(String uuid) {
+        new Thread(() -> {
+            try {
+                URL url = new URL(CONFIG_URL);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder configBuilder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    configBuilder.append(line).append("\n");
+                }
+                reader.close();
+
+                String configTemplate = configBuilder.toString();
+                String finalConfig = configTemplate.replace("REPLACE_UUID", uuid);
+
+                runOnUiThread(() -> {
+                    if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
+                        V2rayController.startV2ray(MainActivity.this, "Remote Config", finalConfig, null);
+                    } else {
+                        V2rayController.stopV2ray(MainActivity.this);
+                    }
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "خطا در دریافت یا جایگزینی کانفیگ", Toast.LENGTH_LONG).show());
+            }
+        }).start();
     }
 
     @Override
