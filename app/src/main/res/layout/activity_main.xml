@@ -41,7 +41,7 @@
             android:inputType="textVisiblePassword"
             android:maxLength="36"
             android:textColor="#FFFFFF"
-            android:hintTextColor="#AAAAAA"
+            android:textColorHint="#AAAAAA"
             android:textSize="14sp"/>
 
         <!-- وضعیت‌ها -->
