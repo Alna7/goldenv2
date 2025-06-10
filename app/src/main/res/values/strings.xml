@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">FreeMCI</string>
     <string name="start_button">اتصال</string>
+    <string-array name="server_options">
+    <item>ترکیه</item>
+    <item>آلمان</item>
+</string-array>
 </resources>
