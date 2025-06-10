@@ -53,13 +53,23 @@ subscribeButton.setOnClickListener(view -> {
         core_version.setText(V2rayController.getCoreVersion());
 
         connection.setOnClickListener(view -> {
-            String userUUID = uuid_input.getText().toString().trim();
-            if (userUUID.length() < 30) {
-                Toast.makeText(this, "UUID is invalid", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            fetchConfigFromUrlAndStart(userUUID);
-        });
+    String userUUID = uuid_input.getText().toString().trim();
+
+    if (userUUID.length() < 30 || !userUUID.matches("^[0-9a-fA-F\\-]{36}$")) {
+        Toast.makeText(this, "UUID is invalid", Toast.LENGTH_SHORT).show();
+        return;
+    }
+
+    // کانفیگ ثابت با UUID کاربر جایگزین‌شده
+    String config = "vless://" + userUUID +
+        "@185.143.234.120:443?type=ws&host=app.alnafun.ir&path=/&security=tls&sni=iau.ac.ir#Turkey";
+
+    if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
+        V2rayController.startV2ray(this, "Turkey", config, null);
+    } else {
+        V2rayController.stopV2ray(this);
+    }
+});
 
         connected_server_delay.setOnClickListener(view -> {
             connected_server_delay.setText("connected server delay : measuring...");
