@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText uuid_input;
     private BroadcastReceiver v2rayBroadCastReceiver;
 
-    private final String CONFIG_URL = "https://example.com/v2ray-config.txt"; // آدرس کانفیگ خودت
+    private final String CONFIG_URL = "http://109.94.171.5/sub.txt"; // آدرس کانفیگ خودت
 
     @SuppressLint({"SetTextI18n", "UnspecifiedRegisterReceiverFlag"})
     @Override
