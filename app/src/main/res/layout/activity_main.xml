@@ -83,6 +83,28 @@
                 android:textStyle="bold" android:textColor="#FFFFFF" />
         </LinearLayout>
 
+        <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginTop="12dp"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="سرور مورد نظر را انتخاب کنید:"
+        android:textSize="14sp"
+        android:layout_marginEnd="8dp" />
+
+    <Spinner
+        android:id="@+id/server_selector"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:entries="@array/server_options"/>
+</LinearLayout>
+
         <!-- دکمه اتصال -->
         <Button
             android:id="@+id/btn_connection"
