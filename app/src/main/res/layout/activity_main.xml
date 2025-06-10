@@ -1,51 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginHorizontal="10dp"
-    android:orientation="vertical"
-    android:id="@+id/main_layout"
+    android:background="#121212"
     tools:context=".MainActivity">
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="Enter UUID :"
-        android:textSize="14sp" />
-
-    <EditText
-        android:id="@+id/uuid_input"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:background="@android:drawable/edit_text"
-        android:hint="your UUID here"
-        android:textSize="14sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <TextView android:id="@+id/connection_mode" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginVertical="8dp" android:text="connection mode : VPN_TUN" android:textSize="14sp" android:textStyle="bold" />
-        <TextView android:id="@+id/server_delay" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginVertical="8dp" android:text="server delay : tap to test" android:textSize="14sp" android:textStyle="bold" />
-        <TextView android:id="@+id/connected_server_delay" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginVertical="8dp" android:text="connected server delay : wait for connection" android:textSize="14sp" android:textStyle="bold" />
-        <TextView android:id="@+id/connection_duration" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginVertical="8dp" android:text="connection time : 00:00:00" android:textSize="14sp" android:textStyle="bold" />
-        <TextView android:id="@+id/connection_speed" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginVertical="8dp" android:text="connection speed : 0 B/s | 0 B/s" android:textSize="14sp" android:textStyle="bold" />
-        <TextView android:id="@+id/connection_traffic" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginVertical="8dp" android:text="connection traffic : 0 B | 0 B" android:textSize="14sp" android:textStyle="bold" />
+        <!-- عنوان بالای صفحه -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="اینترنت رایگان همراه اول"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="#BB86FC"
+            android:layout_marginBottom="16dp" />
+
+        <!-- فیلد UUID -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="کلید خود را وارد کنید :"
+            android:textSize="14sp"
+            android:textColor="#000000" />
+
+        <EditText
+            android:id="@+id/uuid_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@android:drawable/edit_text"
+            android:hint="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            android:inputType="textVisiblePassword"
+            android:maxLength="36"
+            android:textColor="#FFFFFF"
+            android:hintTextColor="#AAAAAA"
+            android:textSize="14sp"/>
+
+        <!-- وضعیت‌ها -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp"
+            android:visibility="gone">
+
+            <TextView android:id="@+id/connection_mode" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginVertical="4dp"
+                android:text="connection mode : VPN_TUN" android:textSize="14sp"
+                android:textStyle="bold" android:textColor="#FFFFFF" />
+
+            <TextView android:id="@+id/server_delay" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginVertical="4dp"
+                android:text="server delay : tap to test" android:textSize="14sp"
+                android:textStyle="bold" android:textColor="#FFFFFF" />
+
+            <TextView android:id="@+id/connected_server_delay" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginVertical="4dp"
+                android:text="connected server delay : wait for connection" android:textSize="14sp"
+                android:textStyle="bold" android:textColor="#FFFFFF" />
+
+            <TextView android:id="@+id/connection_duration" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginVertical="4dp"
+                android:text="connection time : 00:00:00" android:textSize="14sp"
+                android:textStyle="bold" android:textColor="#FFFFFF" />
+
+            <TextView android:id="@+id/connection_speed" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginVertical="4dp"
+                android:text="connection speed : 0 B/s | 0 B/s" android:textSize="14sp"
+                android:textStyle="bold" android:textColor="#FFFFFF" />
+
+            <TextView android:id="@+id/connection_traffic" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginVertical="4dp"
+                android:text="connection traffic : 0 B | 0 B" android:textSize="14sp"
+                android:textStyle="bold" android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- دکمه اتصال -->
+        <Button
+            android:id="@+id/btn_connection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="اتصال / قطع اتصال"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#03DAC5" />
+
+        <!-- متن راهنما -->
+        <TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="20dp"
+    android:textColor="#CCCCCC"
+    android:textSize="13sp"
+    android:lineSpacingExtra="4dp"
+    android:text="
+• با زدن دکمه اتصال، اینترنت شما برای همراه اول رایگان خواهد شد؛ یعنی:
+    - در صورت داشتن بسته فعال، حجم بسته شما کم نخواهد شد.
+    - در صورت نداشتن بسته، اینترنت رایگان برای شما فعال خواهد شد.
+
+• حتماً با شماره‌گیری کد زیر، استفاده از اینترنت آزاد را غیرفعال کنید:
+    *100*113#
+
+• با فعال شدن این سرویس می‌توانید به‌صورت رایگان به فیلم و سریال در سایت‌های زیر دسترسی داشته باشید:
+    - فیلیمو
+    - نماوا
+    - فیلم‌نت
+    - گپ‌فیلم
+  (بدون نیاز به خرید اشتراک)
+
+• برای خرید اشتراک (کلید اختصاصی خودتان)، از طریق کانال تلگرامی زیر اقدام کنید.
+" />
+        <!-- دکمه خرید اشتراک -->
+        <Button
+            android:id="@+id/btn_subscribe"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="خرید اشتراک"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#BB86FC" />
+
+        <!-- نسخه Core -->
+        <TextView
+            android:id="@+id/core_version"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="24dp"
+            android:text="ساخته شده توسط توسط گلد وی پی ان"
+            android:textColor="#888888"
+            android:textSize="10sp" />
     </LinearLayout>
-
-    <Button android:id="@+id/btn_connection" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="10dp" android:text="DISCONNECTED" android:textSize="14sp" android:textStyle="bold" />
-
-    <TextView android:id="@+id/core_version" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_gravity="center" android:gravity="center" android:text="Xray Core 1.8" android:textSize="10sp" />
-</LinearLayout>
+</ScrollView>
