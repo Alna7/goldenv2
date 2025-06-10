@@ -31,6 +31,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Button subscribeButton = findViewById(R.id.btn_subscribe);
+subscribeButton.setOnClickListener(view -> {
+    Intent telegramIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/goldenvpn0"));
+    startActivity(telegramIntent);
+});
 
         if (savedInstanceState == null) {
             V2rayController.init(this, R.drawable.ic_launcher, "V2ray Android");
