@@ -7,9 +7,10 @@ import android.content.*;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-import android.view.View;
+
 import java.io.*;
 import java.net.*;
 import java.util.Objects;
@@ -24,37 +25,46 @@ public class MainActivity extends AppCompatActivity {
     private EditText uuid_input;
     private BroadcastReceiver v2rayBroadCastReceiver;
     private Spinner serverSelector;
-private String selectedHost = "app.alnafun.ir"; // دیفالت ترکیه
-    private final String CONFIG_URL = "http://109.94.171.5/sub.txt"; // آدرس کانفیگ خودت
+
+    private String selectedHost = "app.alnafun.ir"; // دیفالت ترکیه
+    private final String CONFIG_URL = "http://109.94.171.5/sub.txt"; // URL کانفیگ
+    private final String PREFS_NAME = "AppPrefs";
+    private final String CONFIG_KEY = "saved_config";
 
     @SuppressLint({"SetTextI18n", "UnspecifiedRegisterReceiverFlag"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         Button subscribeButton = findViewById(R.id.btn_subscribe);
-subscribeButton.setOnClickListener(view -> {
-    Intent telegramIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/goldenvpn0"));
-    startActivity(telegramIntent);
-});
-
+        Button updateConfigButton = findViewById(R.id.btn_update_config);
         serverSelector = findViewById(R.id.server_selector);
-serverSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        String selectedServer = parent.getItemAtPosition(position).toString();
-        if (selectedServer.equals("آلمان")) {
-            selectedHost = "ali.alnafun.ir";
-        } else {
-            selectedHost = "app.alnafun.ir";
-        }
-    }
 
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        // پیش‌فرض بماند
-    }
-});
+        subscribeButton.setOnClickListener(view -> {
+            Intent telegramIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/goldenvpn0"));
+            startActivity(telegramIntent);
+        });
+
+        updateConfigButton.setOnClickListener(view -> fetchAndSaveRemoteConfig());
+
+        serverSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedServer = parent.getItemAtPosition(position).toString();
+                if (selectedServer.equals("آلمان")) {
+                    selectedHost = "ali.alnafun.ir";
+                } else {
+                    selectedHost = "app.alnafun.ir";
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // پیش‌فرض بماند
+            }
+        });
+
         if (savedInstanceState == null) {
             V2rayController.init(this, R.drawable.ic_launcher, "V2ray Android");
             connection = findViewById(R.id.btn_connection);
@@ -71,24 +81,31 @@ serverSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(
         core_version.setText(V2rayController.getCoreVersion());
 
         connection.setOnClickListener(view -> {
-    String userUUID = uuid_input.getText().toString().trim();
+            String userUUID = uuid_input.getText().toString().trim();
 
-    if (userUUID.length() < 30 || !userUUID.matches("^[0-9a-fA-F\\-]{36}$")) {
-        Toast.makeText(this, "UUID is invalid", Toast.LENGTH_SHORT).show();
-        return;
-    }
+            if (userUUID.length() < 30 || !userUUID.matches("^[0-9a-fA-F\\-]{36}$")) {
+                Toast.makeText(this, "UUID is invalid", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-    // کانفیگ ثابت با UUID کاربر جایگزین‌شده
-    String config = "vless://" + userUUID +
-        "@185.143.234.120:443?type=ws&host=" + selectedHost +
-        "&path=/&security=tls&sni=iau.ac.ir#SelectedServer";
-            
-    if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
-        V2rayController.startV2ray(this, "Turkey", config, null);
-    } else {
-        V2rayController.stopV2ray(this);
-    }
-});
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            String storedConfig = prefs.getString(CONFIG_KEY, null);
+
+            String config;
+            if (storedConfig != null) {
+                config = storedConfig.replace("REPLACE_UUID", userUUID).replace("REPLACE_HOST", selectedHost);
+            } else {
+                config = "vless://" + userUUID +
+                        "@185.143.234.120:443?type=ws&host=" + selectedHost +
+                        "&path=/&security=tls&sni=iau.ac.ir#SelectedServer";
+            }
+
+            if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
+                V2rayController.startV2ray(this, "Dynamic", config, null);
+            } else {
+                V2rayController.stopV2ray(this);
+            }
+        });
 
         connected_server_delay.setOnClickListener(view -> {
             connected_server_delay.setText("connected server delay : measuring...");
@@ -98,7 +115,6 @@ serverSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(
 
         server_delay.setOnClickListener(view -> {
             server_delay.setText("server delay : measuring...");
-            // تست تاخیر فقط زمانی کاربرد داره که کانفیگ لوکال داشته باشی
             new Handler().postDelayed(() ->
                     server_delay.setText("server delay : only available after fetching config"), 200);
         });
@@ -152,7 +168,7 @@ serverSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(
         }
     }
 
-    private void fetchConfigFromUrlAndStart(String uuid) {
+    private void fetchAndSaveRemoteConfig() {
         new Thread(() -> {
             try {
                 URL url = new URL(CONFIG_URL);
@@ -168,20 +184,16 @@ serverSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(
                 }
                 reader.close();
 
-                String configTemplate = configBuilder.toString();
-                String finalConfig = configTemplate.replace("REPLACE_UUID", uuid);
+                String config = configBuilder.toString();
 
-                runOnUiThread(() -> {
-                    if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
-                        V2rayController.startV2ray(MainActivity.this, "Remote Config", finalConfig, null);
-                    } else {
-                        V2rayController.stopV2ray(MainActivity.this);
-                    }
-                });
+                SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                prefs.edit().putString(CONFIG_KEY, config).apply();
+
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "کانفیگ با موفقیت آپدیت شد", Toast.LENGTH_SHORT).show());
 
             } catch (Exception e) {
                 e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "خطا در دریافت یا جایگزینی کانفیگ", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "خطا در دریافت کانفیگ", Toast.LENGTH_LONG).show());
             }
         }).start();
     }
