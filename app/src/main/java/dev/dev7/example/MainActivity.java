@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String SHARED_PREFS_NAME = "v2ray_prefs";
     private static final String CONFIG_KEY = "saved_config";
     private static final String UUID_KEY = "user_uuid";
-    private static final String CONFIG_URL = "https://109.94.171.5/get_config.php";
+    private static final String CONFIG_URL = "http://109.94.171.5/get_config.php";
     private static final String AES_KEY = "n9v6Qw2sD8e3L1b0"; // کلید ۱۶ کاراکتری تصادفی
 
     private Button connection;
