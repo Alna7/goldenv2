@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
                 connected_server_delay.callOnClick();
                 break;
             case DISCONNECTED:
-                connection.setText("قطع هستید");
+                connection.setText("برای اتصال کلیک کنید");
                 break;
             case CONNECTING:
                 connection.setText("در حال اتصال");
