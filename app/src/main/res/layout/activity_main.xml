@@ -147,6 +147,11 @@
     android:layout_marginTop="16dp"/>
         
         <!-- نسخه Core -->
-        
+        <TextView
+    android:id="@+id/core_version"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Core Version" 
+    android:visibility="gone"       />
     </LinearLayout>
 </ScrollView>
