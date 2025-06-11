@@ -200,6 +200,10 @@ public class MainActivity extends AppCompatActivity {
 
                         prefs.edit().putString(CONFIG_KEY, decodedConfig).apply();
 
+                        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+    ClipData clip = ClipData.newPlainText("V2Ray Config", decodedConfig);
+    clipboard.setPrimaryClip(clip);
+
                         runOnUiThread(() -> {
                             Toast.makeText(this, "کانفیگ با موفقیت دریافت شد", Toast.LENGTH_SHORT).show();
                             connection.setEnabled(true);
