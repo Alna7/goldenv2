@@ -91,7 +91,7 @@ uuid_input.setText(savedUUID);
                 Toast.makeText(this, "UUID is invalid", Toast.LENGTH_SHORT).show();
                 return;
             }
-
+          
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             String storedConfig = prefs.getString(CONFIG_KEY, null);
 
@@ -106,12 +106,13 @@ uuid_input.setText(savedUUID);
 
             if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
                 V2rayController.startV2ray(this, "Dynamic", config, null);
+                prefs.edit().putString("user_uuid", userUUID).apply();
+
             } else {
                 V2rayController.stopV2ray(this);
             }
 
-             prefs.edit().putString("user_uuid", userUUID).apply();
-        });
+               });
 
         connected_server_delay.setOnClickListener(view -> {
             connected_server_delay.setText("connected server delay : measuring...");
