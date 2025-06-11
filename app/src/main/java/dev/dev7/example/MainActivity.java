@@ -20,16 +20,18 @@ import dev.dev7.lib.v2ray.utils.V2rayConfigs;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String SHARED_PREFS_NAME = "v2ray_prefs";
+    private static final String CONFIG_KEY = "saved_config";
+    private static final String UUID_KEY = "user_uuid";
+    private static final String CONFIG_URL = "http://109.94.171.5/sub.txt";
+
     private Button connection;
     private TextView connection_speed, connection_traffic, connection_time, server_delay, connected_server_delay, connection_mode, core_version;
     private EditText uuid_input;
     private BroadcastReceiver v2rayBroadCastReceiver;
     private Spinner serverSelector;
 
-    private String selectedHost = "app"; // دیفالت ترکیه
-    private final String CONFIG_URL = "http://109.94.171.5/sub.txt"; // URL کانفیگ
-    private final String PREFS_NAME = "AppPrefs";
-    private final String CONFIG_KEY = "saved_config";
+    private String selectedHost = "app";
 
     @SuppressLint({"SetTextI18n", "UnspecifiedRegisterReceiverFlag"})
     @Override
@@ -37,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        
         Button subscribeButton = findViewById(R.id.btn_subscribe);
         Button updateConfigButton = findViewById(R.id.btn_update_config);
         serverSelector = findViewById(R.id.server_selector);
@@ -61,9 +62,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // پیش‌فرض بماند
-            }
+            public void onNothingSelected(AdapterView<?> parent) {}
         });
 
         if (savedInstanceState == null) {
@@ -75,11 +74,14 @@ public class MainActivity extends AppCompatActivity {
             server_delay = findViewById(R.id.server_delay);
             connection_mode = findViewById(R.id.connection_mode);
             connected_server_delay = findViewById(R.id.connected_server_delay);
-            
-            SharedPreferences prefs = getSharedPreferences("v2ray_prefs", MODE_PRIVATE);
+
+            SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
             uuid_input = findViewById(R.id.uuid_input);
-            String savedUUID = prefs.getString("user_uuid", "");
+
+            // فقط مقدار ذخیره‌شده را نمایش بده، هیچ UUID نساز
+            String savedUUID = prefs.getString(UUID_KEY, "");
             uuid_input.setText(savedUUID);
+
             core_version = findViewById(R.id.core_version);
         }
 
@@ -88,14 +90,16 @@ public class MainActivity extends AppCompatActivity {
         connection.setOnClickListener(view -> {
             String userUUID = uuid_input.getText().toString().trim();
 
-            if (userUUID.length() < 30 || !userUUID.matches("^[0-9a-fA-F\\-]{36}$")) {
-                Toast.makeText(this, "UUID is invalid", Toast.LENGTH_SHORT).show();
+            // اعتبارسنجی دقیق UUID
+            if (!userUUID.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")) {
+                Toast.makeText(this, "UUID نامعتبر است", Toast.LENGTH_SHORT).show();
                 return;
             }
-          
-            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-            String storedConfig = prefs.getString(CONFIG_KEY, null);
 
+            SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
+            prefs.edit().putString(UUID_KEY, userUUID).apply();
+
+            String storedConfig = prefs.getString(CONFIG_KEY, null);
             String config;
             if (storedConfig != null) {
                 config = storedConfig.replace("REPLACE_UUID", userUUID).replace("REPLACE_HOST", selectedHost);
@@ -107,15 +111,10 @@ public class MainActivity extends AppCompatActivity {
 
             if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
                 V2rayController.startV2ray(this, "Dynamic", config, null);
-                String userUUID2 = uuid_input.getText().toString().trim();
-// اعتبارسنجی UUID...
-prefs.edit().putString("user_uuid", userUUID2).apply();
-                
             } else {
                 V2rayController.stopV2ray(this);
             }
-
-               });
+        });
 
         connected_server_delay.setOnClickListener(view -> {
             connected_server_delay.setText("connected server delay : measuring...");
@@ -196,7 +195,7 @@ prefs.edit().putString("user_uuid", userUUID2).apply();
 
                 String config = configBuilder.toString();
 
-                SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
                 prefs.edit().putString(CONFIG_KEY, config).apply();
 
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "کانفیگ با موفقیت آپدیت شد", Toast.LENGTH_SHORT).show());
