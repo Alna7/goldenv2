@@ -107,9 +107,9 @@ public class MainActivity extends AppCompatActivity {
 
             if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
                 V2rayController.startV2ray(this, "Dynamic", config, null);
-                String userUUID = uuid_input.getText().toString().trim();
+                String userUUID2 = uuid_input.getText().toString().trim();
 // اعتبارسنجی UUID...
-prefs.edit().putString("user_uuid", userUUID).apply();
+prefs.edit().putString("user_uuid", userUUID2).apply();
                 
             } else {
                 V2rayController.stopV2ray(this);
