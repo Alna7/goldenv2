@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String CONFIG_KEY = "saved_config";
     private static final String UUID_KEY = "user_uuid";
     private static final String CONFIG_URL = "http://109.94.171.5/get_config.php";
-    private static final String AES_KEY = "n9v6Qw2sD8e3L1b0"; // کلید ۱۶ کاراکتری تصادفی
+    private static final String AES_KEY = "n9v6Qw2sD8e3L1b0"; // کلید ۱۶ کاراکتری
 
     private Button connection;
     private TextView connection_speed, connection_traffic, connection_time, server_delay, connected_server_delay, connection_mode, core_version;
@@ -50,13 +50,12 @@ public class MainActivity extends AppCompatActivity {
         uuid_input = findViewById(R.id.uuid_input);
         core_version = findViewById(R.id.core_version);
 
-        // دکمه اتصال در شروع غیرفعال باشد
-        connection.setEnabled(false);
-
-        // فقط مقدار ذخیره‌شده را نمایش بده، هیچ UUID نساز
+        // مقداردهی اولیه uuid و فعال‌سازی دکمه اتصال در صورت وجود کانفیگ
         SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
         String savedUUID = prefs.getString(UUID_KEY, "");
         uuid_input.setText(savedUUID);
+        String savedConfig = prefs.getString(CONFIG_KEY, null);
+        connection.setEnabled(savedConfig != null && !savedConfig.isEmpty());
 
         core_version.setText(V2rayController.getCoreVersion());
 
@@ -68,10 +67,6 @@ public class MainActivity extends AppCompatActivity {
         updateConfigButton.setOnClickListener(view -> fetchAndSaveRemoteConfig());
 
         connection.setOnClickListener(view -> {
-            if (!connection.isEnabled()) {
-                Toast.makeText(this, "ابتدا آپدیت سرورها را انجام دهید", Toast.LENGTH_SHORT).show();
-                return;
-            }
             String userUUID = uuid_input.getText().toString().trim();
 
             // اعتبارسنجی دقیق UUID
@@ -80,13 +75,14 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
+            // ذخیره UUID
             SharedPreferences prefs1 = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
             prefs1.edit().putString(UUID_KEY, userUUID).apply();
 
             String storedConfig = prefs1.getString(CONFIG_KEY, null);
             String config;
-            if (storedConfig != null) {
-                config = storedConfig.replace("REPLACE_UUID", userUUID);
+            if (storedConfig != null && !storedConfig.isEmpty()) {
+                config = storedConfig;
             } else {
                 Toast.makeText(this, "ابتدا آپدیت سرورها را انجام دهید", Toast.LENGTH_SHORT).show();
                 return;
@@ -167,6 +163,10 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        // ذخیره UUID
+        SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
+        prefs.edit().putString(UUID_KEY, userUUID).apply();
+
         new Thread(() -> {
             try {
                 // ارسال درخواست POST به سرور
@@ -190,16 +190,24 @@ public class MainActivity extends AppCompatActivity {
                     while ((line = reader.readLine()) != null) response.append(line);
                     reader.close();
 
-                    // دیکد کردن کانفیگ با AES
-                    String decodedConfig = AESUtils.decrypt(response.toString(), AES_KEY);
+                    try {
+                        String decodedConfig = AESUtils.decrypt(response.toString(), AES_KEY);
 
-                    SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
-                    prefs.edit().putString(CONFIG_KEY, decodedConfig).apply();
+                        // بررسی صحت رمزگشایی
+                        if (decodedConfig == null || decodedConfig.isEmpty()) {
+                            throw new Exception("Decrypted config is empty");
+                        }
 
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, "کانفیگ با موفقیت دریافت شد", Toast.LENGTH_SHORT).show();
-                        connection.setEnabled(true); // فعال‌سازی دکمه اتصال
-                    });
+                        prefs.edit().putString(CONFIG_KEY, decodedConfig).apply();
+
+                        runOnUiThread(() -> {
+                            Toast.makeText(this, "کانفیگ با موفقیت دریافت شد", Toast.LENGTH_SHORT).show();
+                            connection.setEnabled(true);
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        runOnUiThread(() -> Toast.makeText(this, "خطا در پردازش کانفیگ", Toast.LENGTH_LONG).show());
+                    }
                 } else {
                     runOnUiThread(() -> Toast.makeText(this, "خطا در دریافت کانفیگ", Toast.LENGTH_LONG).show());
                 }
