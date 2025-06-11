@@ -110,8 +110,7 @@ uuid_input.setText(savedUUID);
                 V2rayController.stopV2ray(this);
             }
 
-            SharedPreferences prefs = getSharedPreferences("v2ray_prefs", MODE_PRIVATE);
-            prefs.edit().putString("user_uuid", userUUID).apply();
+             prefs.edit().putString("user_uuid", userUUID).apply();
         });
 
         connected_server_delay.setOnClickListener(view -> {
