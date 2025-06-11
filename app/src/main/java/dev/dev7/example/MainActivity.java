@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        
         Button subscribeButton = findViewById(R.id.btn_subscribe);
         Button updateConfigButton = findViewById(R.id.btn_update_config);
         serverSelector = findViewById(R.id.server_selector);
@@ -75,6 +76,9 @@ public class MainActivity extends AppCompatActivity {
             connection_mode = findViewById(R.id.connection_mode);
             connected_server_delay = findViewById(R.id.connected_server_delay);
             uuid_input = findViewById(R.id.uuid_input);
+            SharedPreferences prefs = getSharedPreferences("v2ray_prefs", MODE_PRIVATE);
+String savedUUID = prefs.getString("user_uuid", "");
+uuid_input.setText(savedUUID);
             core_version = findViewById(R.id.core_version);
         }
 
@@ -105,6 +109,9 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 V2rayController.stopV2ray(this);
             }
+
+            SharedPreferences prefs = getSharedPreferences("v2ray_prefs", MODE_PRIVATE);
+            prefs.edit().putString("user_uuid", userUUID).apply();
         });
 
         connected_server_delay.setOnClickListener(view -> {
