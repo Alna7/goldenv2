@@ -75,10 +75,11 @@ public class MainActivity extends AppCompatActivity {
             server_delay = findViewById(R.id.server_delay);
             connection_mode = findViewById(R.id.connection_mode);
             connected_server_delay = findViewById(R.id.connected_server_delay);
-            uuid_input = findViewById(R.id.uuid_input);
+            
             SharedPreferences prefs = getSharedPreferences("v2ray_prefs", MODE_PRIVATE);
-String savedUUID = prefs.getString("user_uuid", "");
-uuid_input.setText(savedUUID);
+            uuid_input = findViewById(R.id.uuid_input);
+            String savedUUID = prefs.getString("user_uuid", "");
+            uuid_input.setText(savedUUID);
             core_version = findViewById(R.id.core_version);
         }
 
@@ -106,8 +107,10 @@ uuid_input.setText(savedUUID);
 
             if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
                 V2rayController.startV2ray(this, "Dynamic", config, null);
-                prefs.edit().putString("user_uuid", userUUID).apply();
-
+                String userUUID = uuid_input.getText().toString().trim();
+// اعتبارسنجی UUID...
+prefs.edit().putString("user_uuid", userUUID).apply();
+                
             } else {
                 V2rayController.stopV2ray(this);
             }
