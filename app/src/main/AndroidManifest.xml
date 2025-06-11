@@ -7,7 +7,7 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/DC9C9EF5-2786-4C42-926D-FF685E603E42"
         android:label="@string/app_name"
         android:launchMode="singleTask"
         android:supportsRtl="true"
