@@ -23,7 +23,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView connection_speed, connection_traffic, connection_time, server_delay, connected_server_delay, connection_mode, core_version;
     private EditText uuid_input;
     private BroadcastReceiver v2rayBroadCastReceiver;
-
+    private Spinner serverSelector;
+private String selectedHost = "app.alnafun.ir"; // دیفالت ترکیه
     private final String CONFIG_URL = "http://109.94.171.5/sub.txt"; // آدرس کانفیگ خودت
 
     @SuppressLint({"SetTextI18n", "UnspecifiedRegisterReceiverFlag"})
@@ -37,6 +38,23 @@ subscribeButton.setOnClickListener(view -> {
     startActivity(telegramIntent);
 });
 
+        serverSelector = findViewById(R.id.server_selector);
+serverSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        String selectedServer = parent.getItemAtPosition(position).toString();
+        if (selectedServer.equals("آلمان")) {
+            selectedHost = "ali.alnafun.ir";
+        } else {
+            selectedHost = "app.alnafun.ir";
+        }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        // پیش‌فرض بماند
+    }
+});
         if (savedInstanceState == null) {
             V2rayController.init(this, R.drawable.ic_launcher, "V2ray Android");
             connection = findViewById(R.id.btn_connection);
@@ -62,8 +80,9 @@ subscribeButton.setOnClickListener(view -> {
 
     // کانفیگ ثابت با UUID کاربر جایگزین‌شده
     String config = "vless://" + userUUID +
-        "@185.143.234.120:443?type=ws&host=app.alnafun.ir&path=/&security=tls&sni=iau.ac.ir#Turkey";
-
+        "@185.143.234.120:443?type=ws&host=" + selectedHost +
+        "&path=/&security=tls&sni=iau.ac.ir#SelectedServer";
+            
     if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
         V2rayController.startV2ray(this, "Turkey", config, null);
     } else {
