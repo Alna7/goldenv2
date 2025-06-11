@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:text="کلید خود را وارد کنید :"
             android:textSize="14sp"
-            android:textColor="#000000" />
+            android:textColor="#FFFFFF" />
 
         <EditText
             android:id="@+id/uuid_input"
