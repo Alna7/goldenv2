@@ -83,28 +83,6 @@
                 android:textStyle="bold" android:textColor="#FFFFFF" />
         </LinearLayout>
 
-        <LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:layout_marginTop="12dp"
-    android:gravity="center_vertical">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="سرور مورد نظر را انتخاب کنید:"
-        android:textSize="14sp"
-        android:layout_marginEnd="8dp" />
-
-    <Spinner
-        android:id="@+id/server_selector"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:entries="@array/server_options"/>
-</LinearLayout>
-
         <!-- دکمه اتصال -->
         <Button
             android:id="@+id/btn_connection"
@@ -119,14 +97,15 @@
 
         <!-- متن راهنما -->
         <TextView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="20dp"
-    android:textColor="#CCCCCC"
-    android:textSize="13sp"
-    android:lineSpacingExtra="4dp"
-    android:text="• با زدن دکمه اتصال اینترنت شما برای اینترنت همراه اول رایگان خواهد شد یعنی در صورت داشتن بسته فعال حجم بسته شما کم نخواهد شد و در صورت نداشتن بسته اینترنت رایگان برای شما فعال خواهد شد.&#10;&#10;• حتما با شماره‌گیری کد زیر، استفاده از اینترنت آزاد را غیر فعال کنید:&#10;*100*113#&#10;&#10;• با فعال شدن این سرویس می‌توانید به صورت رایگان به فیلم و سریال در سایت‌های فیلیمو، نماوا، فیلم‌نت، گپ‌فیلم بدون نیاز به خرید اشتراک دسترسی پیدا کنید.&#10;&#10;• برای خرید اشتراک (کلید اختصاصی خودتون) از طریق کانال تلگرامی زیر اقدام کنید."
-       />
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:textColor="#CCCCCC"
+            android:textSize="13sp"
+            android:lineSpacingExtra="4dp"
+            android:text="• با زدن دکمه اتصال اینترنت شما برای اینترنت همراه اول رایگان خواهد شد یعنی در صورت داشتن بسته فعال حجم بسته شما کم نخواهد شد و در صورت نداشتن بسته اینترنت رایگان برای شما فعال خواهد شد.&#10;&#10;• حتما با شماره‌گیری کد زیر، استفاده از اینترنت آزاد را غیر فعال کنید:&#10;*100*113#&#10;&#10;• با فعال شدن این سرویس می‌توانید به صورت رایگان به فیلم و سریال در سایت‌های فیلیمو، نماوا، فیلم‌نت، گپ‌فیلم بدون نیاز به خرید اشتراک دسترسی پیدا کنید.&#10;&#10;• برای خرید اشتراک (کلید اختصاصی خودتون) از طریق کانال تلگرامی زیر اقدام کنید."
+            />
+
         <!-- دکمه خرید اشتراک -->
         <Button
             android:id="@+id/btn_subscribe"
@@ -139,19 +118,20 @@
             android:textColor="#FFFFFF"
             android:backgroundTint="#BB86FC" />
 
+        <!-- دکمه آپدیت سرورها -->
         <Button
-    android:id="@+id/btn_update_config"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="آپدیت سرورها"
-    android:layout_marginTop="16dp"/>
-        
+            android:id="@+id/btn_update_config"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="آپدیت سرورها"
+            android:layout_marginTop="16dp"/>
+
         <!-- نسخه Core -->
         <TextView
-    android:id="@+id/core_version"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Core Version" 
-    android:visibility="gone"       />
+            android:id="@+id/core_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Core Version"
+            android:visibility="gone" />
     </LinearLayout>
 </ScrollView>
