@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver v2rayBroadCastReceiver;
     private Spinner serverSelector;
 
-    private String selectedHost = "app.alnafun.ir"; // دیفالت ترکیه
+    private String selectedHost = "app"; // دیفالت ترکیه
     private final String CONFIG_URL = "http://109.94.171.5/sub.txt"; // URL کانفیگ
     private final String PREFS_NAME = "AppPrefs";
     private final String CONFIG_KEY = "saved_config";
@@ -53,9 +53,9 @@ public class MainActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedServer = parent.getItemAtPosition(position).toString();
                 if (selectedServer.equals("آلمان")) {
-                    selectedHost = "ali.alnafun.ir";
+                    selectedHost = "ali";
                 } else {
-                    selectedHost = "app.alnafun.ir";
+                    selectedHost = "app";
                 }
             }
 
@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 config = "vless://" + userUUID +
                         "@185.143.234.120:443?type=ws&host=" + selectedHost +
-                        "&path=/&security=tls&sni=iau.ac.ir#SelectedServer";
+                        ".alnafun.ir&path=/&security=tls&sni=iau.ac.ir#SelectedServer";
             }
 
             if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
@@ -126,14 +126,14 @@ public class MainActivity extends AppCompatActivity {
 
         switch (V2rayController.getConnectionState()) {
             case CONNECTED:
-                connection.setText("CONNECTED");
+                connection.setText("وصل شدید");
                 connected_server_delay.callOnClick();
                 break;
             case DISCONNECTED:
-                connection.setText("DISCONNECTED");
+                connection.setText("قطع هستید");
                 break;
             case CONNECTING:
-                connection.setText("CONNECTING");
+                connection.setText("در حال اتصال");
                 break;
         }
 
