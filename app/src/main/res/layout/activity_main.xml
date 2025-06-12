@@ -48,8 +48,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginTop="12dp"
-            android:visibility="gone"
-            android:id="@+id/connection_info_layout">
+            android:visibility="gone">
 
             <TextView android:id="@+id/connection_mode"
                 android:layout_width="match_parent"
