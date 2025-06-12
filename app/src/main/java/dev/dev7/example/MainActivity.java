@@ -3,11 +3,12 @@ package dev.dev7.example;
 import static dev.dev7.lib.v2ray.utils.V2rayConstants.*;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.*;
+import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -24,8 +25,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String CONFIG_KEY = "saved_config";
     private static final String UUID_KEY = "user_uuid";
     private static final String CONFIG_URL = "http://109.94.171.5/get_config.php";
-    private static final String AES_KEY = "n9v6Qw2sD8e3L1b0"; // کلید ۱۶ کاراکتری
+    private static final String AES_KEY = "n9v6Qw2sD8e3L1b0";
+    private static final int VPN_REQUEST_CODE = 100;
 
+    private SharedPreferences prefs;
     private Button connection;
     private TextView connection_speed, connection_traffic, connection_time, server_delay, connected_server_delay, connection_mode, core_version;
     private EditText uuid_input;
@@ -36,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
 
         Button subscribeButton = findViewById(R.id.btn_subscribe);
         Button updateConfigButton = findViewById(R.id.btn_update_config);
@@ -51,11 +56,8 @@ public class MainActivity extends AppCompatActivity {
         core_version = findViewById(R.id.core_version);
 
         // مقداردهی اولیه uuid و فعال‌سازی دکمه اتصال در صورت وجود کانفیگ
-        SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
-        String savedUUID = prefs.getString(UUID_KEY, "");
-        uuid_input.setText(savedUUID);
-        String savedConfig = prefs.getString(CONFIG_KEY, null);
-        connection.setEnabled(savedConfig != null && !savedConfig.isEmpty());
+        uuid_input.setText(prefs.getString(UUID_KEY, ""));
+        connection.setEnabled(prefs.getString(CONFIG_KEY, null) != null);
 
         core_version.setText(V2rayController.getCoreVersion());
 
@@ -75,23 +77,18 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            // ذخیره UUID
-            SharedPreferences prefs1 = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
-            prefs1.edit().putString(UUID_KEY, userUUID).apply();
-
-            String storedConfig = prefs1.getString(CONFIG_KEY, null);
-            String config;
-            if (storedConfig != null && !storedConfig.isEmpty()) {
-                config = storedConfig;
-            } else {
+            String storedConfig = prefs.getString(CONFIG_KEY, null);
+            if (storedConfig == null || storedConfig.isEmpty()) {
                 Toast.makeText(this, "ابتدا آپدیت سرورها را انجام دهید", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
-                V2rayController.startV2ray(this, "Dynamic", config, null);
+            // درخواست مجوز VPN
+            Intent intent = VpnService.prepare(this);
+            if (intent != null) {
+                startActivityForResult(intent, VPN_REQUEST_CODE);
             } else {
-                V2rayController.stopV2ray(this);
+                startV2rayConnection(storedConfig);
             }
         });
 
@@ -156,6 +153,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void startV2rayConnection(String config) {
+        if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
+            V2rayController.startV2ray(this, "Dynamic", config, null);
+        } else {
+            V2rayController.stopV2ray(this);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == VPN_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            String storedConfig = prefs.getString(CONFIG_KEY, null);
+            if (storedConfig != null && !storedConfig.isEmpty()) {
+                startV2rayConnection(storedConfig);
+            }
+        }
+    }
+
     private void fetchAndSaveRemoteConfig() {
         String userUUID = uuid_input.getText().toString().trim();
         if (!userUUID.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")) {
@@ -163,13 +179,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // ذخیره UUID
-        SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
+        // ذخیره uuid فقط اینجا
         prefs.edit().putString(UUID_KEY, userUUID).apply();
 
         new Thread(() -> {
             try {
-                // ارسال درخواست POST به سرور
                 URL url = new URL(CONFIG_URL);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
@@ -193,19 +207,19 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         String decodedConfig = AESUtils.decrypt(response.toString(), AES_KEY);
 
-                        // بررسی صحت رمزگشایی
                         if (decodedConfig == null || decodedConfig.isEmpty()) {
                             throw new Exception("Decrypted config is empty");
                         }
 
                         prefs.edit().putString(CONFIG_KEY, decodedConfig).apply();
 
+                        // کپی در کلیپ‌بورد برای تست
                         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-    ClipData clip = ClipData.newPlainText("V2Ray Config", decodedConfig);
-    clipboard.setPrimaryClip(clip);
+                        ClipData clip = ClipData.newPlainText("V2Ray Config", decodedConfig);
+                        clipboard.setPrimaryClip(clip);
 
                         runOnUiThread(() -> {
-                            Toast.makeText(this, "کانفیگ با موفقیت دریافت شد", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "کانفیگ با موفقیت دریافت شد و در کلیپ‌بورد کپی شد", Toast.LENGTH_LONG).show();
                             connection.setEnabled(true);
                         });
                     } catch (Exception e) {
