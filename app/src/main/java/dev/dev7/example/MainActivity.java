@@ -3,18 +3,19 @@ package dev.dev7.example;
 import static dev.dev7.lib.v2ray.utils.V2rayConstants.*;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.*;
-import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.*;
 import java.net.*;
 import java.util.Objects;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 
 import dev.dev7.lib.v2ray.V2rayController;
 import dev.dev7.lib.v2ray.utils.V2rayConfigs;
@@ -26,9 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String UUID_KEY = "user_uuid";
     private static final String CONFIG_URL = "http://109.94.171.5/get_config.php";
     private static final String AES_KEY = "n9v6Qw2sD8e3L1b0";
-    private static final int VPN_REQUEST_CODE = 100;
 
-    private SharedPreferences prefs;
     private Button connection;
     private TextView connection_speed, connection_traffic, connection_time, server_delay, connected_server_delay, connection_mode, core_version;
     private EditText uuid_input;
@@ -40,25 +39,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
-
         Button subscribeButton = findViewById(R.id.btn_subscribe);
         Button updateConfigButton = findViewById(R.id.btn_update_config);
-
         connection = findViewById(R.id.btn_connection);
+
         connection_speed = findViewById(R.id.connection_speed);
         connection_time = findViewById(R.id.connection_duration);
         connection_traffic = findViewById(R.id.connection_traffic);
         server_delay = findViewById(R.id.server_delay);
-        connection_mode = findViewById(R.id.connection_mode);
         connected_server_delay = findViewById(R.id.connected_server_delay);
+        connection_mode = findViewById(R.id.connection_mode);
         uuid_input = findViewById(R.id.uuid_input);
         core_version = findViewById(R.id.core_version);
 
-        // مقداردهی اولیه uuid و فعال‌سازی دکمه اتصال در صورت وجود کانفیگ
-        uuid_input.setText(prefs.getString(UUID_KEY, ""));
-        connection.setEnabled(prefs.getString(CONFIG_KEY, null) != null);
+        V2rayController.init(this, R.drawable.ic_launcher, "V2ray Android");
 
+        SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
+        uuid_input.setText(prefs.getString(UUID_KEY, ""));
         core_version.setText(V2rayController.getCoreVersion());
 
         subscribeButton.setOnClickListener(view -> {
@@ -70,35 +67,25 @@ public class MainActivity extends AppCompatActivity {
 
         connection.setOnClickListener(view -> {
             String userUUID = uuid_input.getText().toString().trim();
+
             if (!userUUID.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")) {
                 Toast.makeText(this, "UUID نامعتبر است", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            String storedConfig = prefs.getString(CONFIG_KEY, null);
-            String config;
-            if (storedConfig != null && !storedConfig.isEmpty()) {
-                // اگر کانفیگ شامل REPLACE_UUID بود، جایگزینی انجام بده
-                if (storedConfig.contains("REPLACE_UUID")) {
-                    config = storedConfig.replace("REPLACE_UUID", userUUID);
-                } else {
-                    config = storedConfig;
-                }
-            } else {
-                // ساخت دستی کانفیگ (در صورت نبود کانفیگ دریافتی)
-                config = "vless://" + userUUID +
-                        "@185.143.234.120:443?type=ws&host=app.alnafun.ir&path=/?ed%3D443&security=tls&sni=iau.ac.ir#Turkey";
+            SharedPreferences prefs1 = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
+            String config = prefs1.getString(CONFIG_KEY, null);
+            prefs1.edit().putString(UUID_KEY, userUUID).apply();
+
+            if (config == null || config.isEmpty()) {
+                Toast.makeText(this, "ابتدا دکمه آپدیت را بزنید", Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            // دیباگ: نمایش کانفیگ نهایی
-            Toast.makeText(this, "کانفیگ استفاده شده:\n" + config, Toast.LENGTH_LONG).show();
-
-            // درخواست مجوز VPN
-            Intent intent = VpnService.prepare(this);
-            if (intent != null) {
-                startActivityForResult(intent, VPN_REQUEST_CODE);
+            if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
+                V2rayController.startV2ray(this, "Dynamic", config, null);
             } else {
-                startV2rayConnection(config);
+                V2rayController.stopV2ray(this);
             }
         });
 
@@ -119,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
             connection_mode.setText("connection mode : " + V2rayConfigs.serviceMode.toString());
         });
 
+        // وضعیت اتصال فعلی
         switch (V2rayController.getConnectionState()) {
             case CONNECTED:
                 connection.setText("وصل شدید");
@@ -163,59 +151,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startV2rayConnection(String config) {
-        try {
-            if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
-                V2rayController.startV2ray(this, "Dynamic", config, null);
-                Toast.makeText(this, "اتصال در حال برقراری...", Toast.LENGTH_SHORT).show();
-            } else {
-                V2rayController.stopV2ray(this);
-                Toast.makeText(this, "اتصال قطع شد", Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "خطا در اتصال: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == VPN_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            String userUUID = uuid_input.getText().toString().trim();
-            String storedConfig = prefs.getString(CONFIG_KEY, null);
-
-            String config;
-            if (storedConfig != null && !storedConfig.isEmpty()) {
-                if (storedConfig.contains("REPLACE_UUID")) {
-                    config = storedConfig.replace("REPLACE_UUID", userUUID);
-                } else {
-                    config = storedConfig;
-                }
-            } else {
-                config = "vless://" + userUUID +
-                        "@185.143.234.120:443?type=ws&host=app.alnafun.ir&path=/?ed%3D443&security=tls&sni=iau.ac.ir#Turkey";
-            }
-
-            // دیباگ: نمایش کانفیگ نهایی
-            Toast.makeText(this, "کانفیگ استفاده شده:\n" + config, Toast.LENGTH_LONG).show();
-
-            startV2rayConnection(config);
-        }
-    }
-
     private void fetchAndSaveRemoteConfig() {
-        String userUUID = uuid_input.getText().toString().trim();
-        if (!userUUID.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")) {
-            runOnUiThread(() -> Toast.makeText(this, "UUID نامعتبر است", Toast.LENGTH_SHORT).show());
-            return;
-        }
-
-        // ذخیره uuid فقط اینجا
-        prefs.edit().putString(UUID_KEY, userUUID).apply();
-
         new Thread(() -> {
             try {
+                String uuid = uuid_input.getText().toString().trim();
+                if (!uuid.matches("^[0-9a-fA-F\\-]{36}$")) {
+                    runOnUiThread(() -> Toast.makeText(this, "UUID نامعتبر است", Toast.LENGTH_SHORT).show());
+                    return;
+                }
+
                 URL url = new URL(CONFIG_URL);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
@@ -223,49 +167,45 @@ public class MainActivity extends AppCompatActivity {
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);
 
-                String postData = "uuid=" + URLEncoder.encode(userUUID, "UTF-8");
+                String postData = "uuid=" + URLEncoder.encode(uuid, "UTF-8");
                 OutputStream os = conn.getOutputStream();
                 os.write(postData.getBytes());
                 os.flush();
                 os.close();
 
-                if (conn.getResponseCode() == 200) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) response.append(line);
-                    reader.close();
-
-                    try {
-                        String decodedConfig = AESUtils.decrypt(response.toString(), AES_KEY);
-
-                        if (decodedConfig == null || decodedConfig.isEmpty()) {
-                            throw new Exception("Decrypted config is empty");
-                        }
-
-                        prefs.edit().putString(CONFIG_KEY, decodedConfig).apply();
-
-                        // کپی در کلیپ‌بورد برای تست
-                        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                        ClipData clip = ClipData.newPlainText("V2Ray Config", decodedConfig);
-                        clipboard.setPrimaryClip(clip);
-
-                        runOnUiThread(() -> {
-                            Toast.makeText(this, "کانفیگ با موفقیت دریافت شد و در کلیپ‌بورد کپی شد", Toast.LENGTH_LONG).show();
-                            connection.setEnabled(true);
-                        });
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        runOnUiThread(() -> Toast.makeText(this, "خطا در پردازش کانفیگ", Toast.LENGTH_LONG).show());
-                    }
-                } else {
-                    runOnUiThread(() -> Toast.makeText(this, "خطا در دریافت کانفیگ", Toast.LENGTH_LONG).show());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder responseBuilder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    responseBuilder.append(line);
                 }
+                reader.close();
+
+                String encryptedConfig = responseBuilder.toString();
+                String decryptedConfig = decryptAES(encryptedConfig, AES_KEY);
+
+                SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
+                prefs.edit()
+                        .putString(CONFIG_KEY, decryptedConfig)
+                        .putString(UUID_KEY, uuid)
+                        .apply();
+
+                runOnUiThread(() -> Toast.makeText(this, "کانفیگ با موفقیت ذخیره شد", Toast.LENGTH_SHORT).show());
+
             } catch (Exception e) {
                 e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(this, "خطا در ارتباط با سرور", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(this, "خطا در دریافت یا رمزگشایی کانفیگ", Toast.LENGTH_LONG).show());
             }
         }).start();
+    }
+
+    private String decryptAES(String encryptedData, String key) throws Exception {
+        byte[] encryptedBytes = android.util.Base64.decode(encryptedData, android.util.Base64.DEFAULT);
+        SecretKeySpec secretKey = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, secretKey);
+        byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+        return new String(decryptedBytes, "UTF-8");
     }
 
     @Override
@@ -273,18 +213,6 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         if (v2rayBroadCastReceiver != null) {
             unregisterReceiver(v2rayBroadCastReceiver);
-        }
-    }
-
-    // کلاس رمزگشایی AES
-    public static class AESUtils {
-        public static String decrypt(String encrypted, String key) throws Exception {
-            javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(key.getBytes("UTF-8"), "AES");
-            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey);
-            byte[] decodedValue = android.util.Base64.decode(encrypted, android.util.Base64.DEFAULT);
-            byte[] decryptedVal = cipher.doFinal(decodedValue);
-            return new String(decryptedVal);
         }
     }
 }
