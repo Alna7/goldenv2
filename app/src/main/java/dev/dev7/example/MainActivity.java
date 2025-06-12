@@ -69,64 +69,38 @@ public class MainActivity extends AppCompatActivity {
         updateConfigButton.setOnClickListener(view -> fetchAndSaveRemoteConfig());
 
         connection.setOnClickListener(view -> {
-    // اعتبارسنجی UUID
-    String userUUID = uuid_input.getText().toString().trim();
-    if (!userUUID.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")) {
-        Toast.makeText(this, "UUID نامعتبر است", Toast.LENGTH_SHORT).show();
-        return;
-    }
+            String userUUID = uuid_input.getText().toString().trim();
+            if (!userUUID.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")) {
+                Toast.makeText(this, "UUID نامعتبر است", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-    // دریافت کانفیگ از SharedPreferences
-    SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
-    String storedConfig = prefs.getString(CONFIG_KEY, null);
+            String storedConfig = prefs.getString(CONFIG_KEY, null);
+            String config;
+            if (storedConfig != null && !storedConfig.isEmpty()) {
+                // اگر کانفیگ شامل REPLACE_UUID بود، جایگزینی انجام بده
+                if (storedConfig.contains("REPLACE_UUID")) {
+                    config = storedConfig.replace("REPLACE_UUID", userUUID);
+                } else {
+                    config = storedConfig;
+                }
+            } else {
+                // ساخت دستی کانفیگ (در صورت نبود کانفیگ دریافتی)
+                config = "vless://" + userUUID +
+                        "@185.143.234.120:443?type=ws&host=app.alnafun.ir&path=/?ed%3D443&security=tls&sni=iau.ac.ir#Turkey";
+            }
 
-    // اگر کانفیگ وجود نداشت از منطق قدیمی استفاده کن
-    String config;
-    if (storedConfig != null && !storedConfig.isEmpty()) {
-        // جایگزینی UUID در کانفیگ دریافتی
-        config = storedConfig.replace("REPLACE_UUID", userUUID);
-    } else {
-        // ساخت دستی کانفیگ (منطق قدیمی)
-        config = "vless://" + userUUID + 
-                "@185.143.234.120:443?type=ws&host=app.alnafun.ir&path=/?ed%3D443&security=tls&sni=iau.ac.ir#Turkey";
-    }
+            // دیباگ: نمایش کانفیگ نهایی
+            Toast.makeText(this, "کانفیگ استفاده شده:\n" + config, Toast.LENGTH_LONG).show();
 
-    // درخواست مجوز VPN
-    Intent intent = VpnService.prepare(this);
-    if (intent != null) {
-        startActivityForResult(intent, VPN_REQUEST_CODE);
-    } else {
-        startV2rayConnection(config);
-    }
-});
-
-// متد شروع اتصال
-private void startV2rayConnection(String config) {
-    if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
-        V2rayController.startV2ray(this, "Dynamic", config, null);
-        Toast.makeText(this, "اتصال در حال برقراری...", Toast.LENGTH_SHORT).show();
-    } else {
-        V2rayController.stopV2ray(this);
-        Toast.makeText(this, "اتصال قطع شد", Toast.LENGTH_SHORT).show();
-    }
-}
-
-// هندل نتیجه مجوز VPN
-@Override
-protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-    if (requestCode == VPN_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-        String userUUID = uuid_input.getText().toString().trim();
-        SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
-        String storedConfig = prefs.getString(CONFIG_KEY, null);
-        
-        String config = storedConfig != null ? 
-            storedConfig.replace("REPLACE_UUID", userUUID) : 
-            "vless://" + userUUID + "..."; // ساخت دستی
-        
-        startV2rayConnection(config);
-    }
-}
+            // درخواست مجوز VPN
+            Intent intent = VpnService.prepare(this);
+            if (intent != null) {
+                startActivityForResult(intent, VPN_REQUEST_CODE);
+            } else {
+                startV2rayConnection(config);
+            }
+        });
 
         connected_server_delay.setOnClickListener(view -> {
             connected_server_delay.setText("connected server delay : measuring...");
@@ -190,10 +164,17 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     }
 
     private void startV2rayConnection(String config) {
-        if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
-            V2rayController.startV2ray(this, "Dynamic", config, null);
-        } else {
-            V2rayController.stopV2ray(this);
+        try {
+            if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
+                V2rayController.startV2ray(this, "Dynamic", config, null);
+                Toast.makeText(this, "اتصال در حال برقراری...", Toast.LENGTH_SHORT).show();
+            } else {
+                V2rayController.stopV2ray(this);
+                Toast.makeText(this, "اتصال قطع شد", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "خطا در اتصال: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            e.printStackTrace();
         }
     }
 
@@ -201,10 +182,25 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == VPN_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            String userUUID = uuid_input.getText().toString().trim();
             String storedConfig = prefs.getString(CONFIG_KEY, null);
+
+            String config;
             if (storedConfig != null && !storedConfig.isEmpty()) {
-                startV2rayConnection(storedConfig);
+                if (storedConfig.contains("REPLACE_UUID")) {
+                    config = storedConfig.replace("REPLACE_UUID", userUUID);
+                } else {
+                    config = storedConfig;
+                }
+            } else {
+                config = "vless://" + userUUID +
+                        "@185.143.234.120:443?type=ws&host=app.alnafun.ir&path=/?ed%3D443&security=tls&sni=iau.ac.ir#Turkey";
             }
+
+            // دیباگ: نمایش کانفیگ نهایی
+            Toast.makeText(this, "کانفیگ استفاده شده:\n" + config, Toast.LENGTH_LONG).show();
+
+            startV2rayConnection(config);
         }
     }
 
