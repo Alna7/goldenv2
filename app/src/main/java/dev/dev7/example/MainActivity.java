@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private List<String> configNames = new ArrayList<>();
     private ArrayAdapter<String> adapter;
 
-    private static final String BASE_URL = "https://www.speedur.org:2096/sub/";
+    private static final String BASE_URL = "https://92.118.190.133:5001/configs?code=";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
