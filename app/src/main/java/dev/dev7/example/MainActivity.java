@@ -4,223 +4,125 @@ import static dev.dev7.lib.v2ray.utils.V2rayConstants.*;
 
 import android.annotation.SuppressLint;
 import android.content.*;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
+import android.os.*;
 import android.view.View;
 import android.widget.*;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.*;
 import java.net.*;
-import java.util.Objects;
+import java.util.*;
+
+import android.util.Base64;
 
 import dev.dev7.lib.v2ray.V2rayController;
-import dev.dev7.lib.v2ray.utils.V2rayConfigs;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String SHARED_PREFS_NAME = "v2ray_prefs";
-    private static final String CONFIG_KEY = "saved_config";
-    private static final String UUID_KEY = "user_uuid";
-    private static final String CONFIG_URL = "http://109.94.171.5/sub.txt";
-
-    private Button connection;
-    private TextView connection_speed, connection_traffic, connection_time, server_delay, connected_server_delay, connection_mode, core_version;
-    private EditText uuid_input;
-    private BroadcastReceiver v2rayBroadCastReceiver;
+    private EditText keyInput;
     private Spinner serverSelector;
+    private Button btnUpdateConfig, btnConnection;
+    private List<String> configList = new ArrayList<>();
+    private List<String> configNames = new ArrayList<>();
+    private ArrayAdapter<String> adapter;
 
-    private String selectedHost = "app";
+    private static final String BASE_URL = "https://www.speedur.org:2096/sub/";
 
-    @SuppressLint({"SetTextI18n", "UnspecifiedRegisterReceiverFlag"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        V2rayController.init(this, R.drawable.ic_launcher, "Golden VPN");
 
-        Button subscribeButton = findViewById(R.id.btn_subscribe);
-        Button updateConfigButton = findViewById(R.id.btn_update_config);
+        keyInput = findViewById(R.id.key_input);
         serverSelector = findViewById(R.id.server_selector);
+        btnUpdateConfig = findViewById(R.id.btn_update_config);
+        btnConnection = findViewById(R.id.btn_connection);
 
-        subscribeButton.setOnClickListener(view -> {
-            Intent telegramIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/goldenvpn0"));
-            startActivity(telegramIntent);
-        });
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, configNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        serverSelector.setAdapter(adapter);
 
-        updateConfigButton.setOnClickListener(view -> fetchAndSaveRemoteConfig());
+        btnUpdateConfig.setOnClickListener(view -> fetchConfigs());
 
-        serverSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedServer = parent.getItemAtPosition(position).toString();
-                if (selectedServer.equals("آلمان")) {
-                    selectedHost = "ali";
+        btnConnection.setOnClickListener(view -> {
+            int selectedIndex = serverSelector.getSelectedItemPosition();
+            if (selectedIndex >= 0 && selectedIndex < configList.size()) {
+                String selectedConfig = configList.get(selectedIndex);
+                if (V2rayController.getConnectionState() == V2rayController.CONNECTION_STATES.DISCONNECTED) {
+                    V2rayController.startV2ray(this, "Golden", selectedConfig, null);
                 } else {
-                    selectedHost = "app";
+                    V2rayController.stopV2ray(this);
                 }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
-        V2rayController.init(this, R.drawable.ic_launcher, "V2ray Android");
-
-        connection = findViewById(R.id.btn_connection);
-        connection_speed = findViewById(R.id.connection_speed);
-        connection_time = findViewById(R.id.connection_duration);
-        connection_traffic = findViewById(R.id.connection_traffic);
-        server_delay = findViewById(R.id.server_delay);
-        connection_mode = findViewById(R.id.connection_mode);
-        connected_server_delay = findViewById(R.id.connected_server_delay);
-        uuid_input = findViewById(R.id.uuid_input);
-        core_version = findViewById(R.id.core_version);
-
-        // نمایش اطلاعات اتصال
-        LinearLayout connectionInfoLayout = findViewById(R.id.connection_info_layout);
-        connectionInfoLayout.setVisibility(View.VISIBLE);
-
-        // UUID
-        SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
-        String savedUUID = prefs.getString(UUID_KEY, "");
-        uuid_input.setText(savedUUID);
-
-        core_version.setText(V2rayController.getCoreVersion());
-
-        connection.setOnClickListener(view -> {
-            String userUUID = uuid_input.getText().toString().trim();
-
-            // بررسی صحت UUID
-            if (!userUUID.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")) {
-                Toast.makeText(this, "UUID نامعتبر است", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            prefs.edit().putString(UUID_KEY, userUUID).apply();
-
-            String storedConfig = prefs.getString(CONFIG_KEY, null);
-            String config;
-            if (storedConfig != null) {
-                config = storedConfig.replace("REPLACE_UUID", userUUID).replace("REPLACE_HOST", selectedHost);
             } else {
-                config = "vless://" + userUUID +
-                        "@185.143.234.120:443?type=ws&host=" + selectedHost +
-                        ".alnafun.ir&path=/&security=tls&sni=iau.ac.ir#SelectedServer";
-            }
-
-            if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
-                V2rayController.startV2ray(this, "Dynamic", config, null);
-            } else {
-                V2rayController.stopV2ray(this);
+                Toast.makeText(this, "سروری انتخاب نشده", Toast.LENGTH_SHORT).show();
             }
         });
-
-        connected_server_delay.setOnClickListener(view -> {
-            connected_server_delay.setText("connected server delay : measuring...");
-            V2rayController.getConnectedV2rayServerDelay(this, delayResult -> runOnUiThread(() ->
-                    connected_server_delay.setText("connected server delay : " + delayResult + "ms")));
-        });
-
-        server_delay.setOnClickListener(view -> {
-            server_delay.setText("server delay : measuring...");
-            new Handler().postDelayed(() ->
-                    server_delay.setText("server delay : only available after fetching config"), 200);
-        });
-
-        connection_mode.setOnClickListener(view -> {
-            V2rayController.toggleConnectionMode();
-            connection_mode.setText("connection mode : " + V2rayConfigs.serviceMode.toString());
-        });
-
-        // وضعیت اولیه دکمه اتصال
-        switch (V2rayController.getConnectionState()) {
-            case CONNECTED:
-                connection.setText("وصل شدید");
-                connected_server_delay.callOnClick();
-                break;
-            case DISCONNECTED:
-                connection.setText("برای اتصال کلیک کنید");
-                break;
-            case CONNECTING:
-                connection.setText("در حال اتصال");
-                break;
-        }
-
-        // BroadcastReceiver
-        v2rayBroadCastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                runOnUiThread(() -> {
-                    Bundle extras = intent.getExtras();
-                    if (extras == null) return;
-
-                    connection_time.setText("connection time : " + extras.getString(SERVICE_DURATION_BROADCAST_EXTRA));
-                    connection_speed.setText("connection speed : " + extras.getString(SERVICE_UPLOAD_SPEED_BROADCAST_EXTRA) + " | " + extras.getString(SERVICE_DOWNLOAD_SPEED_BROADCAST_EXTRA));
-                    connection_traffic.setText("connection traffic : " + extras.getString(SERVICE_UPLOAD_TRAFFIC_BROADCAST_EXTRA) + " | " + extras.getString(SERVICE_DOWNLOAD_TRAFFIC_BROADCAST_EXTRA));
-                    connection_mode.setText("connection mode : " + V2rayConfigs.serviceMode.toString());
-
-                    CONNECTION_STATES state = (CONNECTION_STATES) extras.getSerializable(SERVICE_CONNECTION_STATE_BROADCAST_EXTRA);
-                    if (state == null) return;
-
-                    switch (state) {
-                        case CONNECTED:
-                            connection.setText("CONNECTED");
-                            break;
-                        case DISCONNECTED:
-                            connection.setText("DISCONNECTED");
-                            connected_server_delay.setText("connected server delay : wait for connection");
-                            break;
-                        case CONNECTING:
-                            connection.setText("CONNECTING");
-                            break;
-                    }
-                });
-            }
-        };
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(v2rayBroadCastReceiver, new IntentFilter(V2RAY_SERVICE_STATICS_BROADCAST_INTENT), RECEIVER_EXPORTED);
-        } else {
-            registerReceiver(v2rayBroadCastReceiver, new IntentFilter(V2RAY_SERVICE_STATICS_BROADCAST_INTENT));
-        }
     }
 
-    private void fetchAndSaveRemoteConfig() {
+    private void fetchConfigs() {
+        String key = keyInput.getText().toString().trim();
+        if (key.isEmpty()) {
+            Toast.makeText(this, "لطفاً کلید را وارد کنید", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         new Thread(() -> {
             try {
-                URL url = new URL(CONFIG_URL);
+                URL url = new URL(BASE_URL + key);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);
-
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                StringBuilder configBuilder = new StringBuilder();
+                StringBuilder builder = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    configBuilder.append(line).append("\n");
+                    builder.append(line).append("\n");
                 }
                 reader.close();
 
-                String config = configBuilder.toString();
+                List<String> fullConfigs = new ArrayList<>();
+                List<String> names = new ArrayList<>();
 
-                SharedPreferences prefs = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
-                prefs.edit().putString(CONFIG_KEY, config).apply();
+                for (String rawLine : builder.toString().split("\n")) {
+                    rawLine = rawLine.trim();
+                    if (rawLine.startsWith("vmess://") || rawLine.startsWith("vless://")) {
+                        String decodedJson = null;
+                        if (rawLine.startsWith("vmess://")) {
+                            try {
+                                String jsonPart = rawLine.substring(8);
+                                decodedJson = new String(Base64.decode(jsonPart, Base64.DEFAULT));
+                                String ps = decodedJson.contains("\"ps\"") ? decodedJson.split("\"ps\"\\s*:\\s*\"")[1].split("\"")[0] : "بدون‌نام";
+                                names.add(ps);
+                            } catch (Exception e) {
+                                names.add("VMess ناشناس");
+                            }
+                        } else {
+                            // vless
+                            String ps = "VLESS ناشناس";
+                            if (rawLine.contains("#")) {
+                                ps = URLDecoder.decode(rawLine.substring(rawLine.indexOf('#') + 1), "UTF-8");
+                            }
+                            names.add(ps);
+                        }
+                        fullConfigs.add(rawLine);
+                    }
+                }
 
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "کانفیگ با موفقیت آپدیت شد", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> {
+                    configList.clear();
+                    configList.addAll(fullConfigs);
+                    configNames.clear();
+                    configNames.addAll(names);
+                    adapter.notifyDataSetChanged();
+                    Toast.makeText(MainActivity.this, "کانفیگ‌ها بارگذاری شدند", Toast.LENGTH_SHORT).show();
+                });
 
             } catch (Exception e) {
                 e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "خطا در دریافت کانفیگ", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "خطا در دریافت لیست", Toast.LENGTH_LONG).show());
             }
         }).start();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (v2rayBroadCastReceiver != null) {
-            unregisterReceiver(v2rayBroadCastReceiver);
-        }
     }
 }
