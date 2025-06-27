@@ -18,6 +18,7 @@ import android.util.Base64;
 
 import dev.dev7.lib.v2ray.V2rayController;
 import static dev.dev7.lib.v2ray.utils.V2rayConstants.CONNECTION_STATES;
+
 public class MainActivity extends AppCompatActivity {
 
     private EditText keyInput;
@@ -51,14 +52,16 @@ public class MainActivity extends AppCompatActivity {
             if (selectedIndex >= 0 && selectedIndex < configList.size()) {
                 String selectedConfig = configList.get(selectedIndex);
                 if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
-                V2rayController.startV2ray(this, "Dynamic", selectedConfig, null);
+                    V2rayController.startV2ray(this, "Dynamic", selectedConfig, null);
+                } else {
+                    V2rayController.stopV2ray(this);
+                }
             } else {
-                V2rayController.stopV2ray(this);
+                Toast.makeText(this, "سروری انتخاب نشده", Toast.LENGTH_SHORT).show();
             }
-        });
+        }); // 👈 این خط قبلاً جا افتاده بود
     }
 
-    // 👇👇 این متد حالا بیرون از onCreate تعریف شده
     private void fetchConfigs() {
         String key = keyInput.getText().toString().trim();
         if (key.isEmpty()) {
