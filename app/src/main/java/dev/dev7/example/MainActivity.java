@@ -17,7 +17,7 @@ import java.util.*;
 import android.util.Base64;
 
 import dev.dev7.lib.v2ray.V2rayController;
-
+import static dev.dev7.lib.v2ray.utils.V2rayConstants.CONNECTION_STATES;
 public class MainActivity extends AppCompatActivity {
 
     private EditText keyInput;
@@ -50,15 +50,10 @@ public class MainActivity extends AppCompatActivity {
             int selectedIndex = serverSelector.getSelectedItemPosition();
             if (selectedIndex >= 0 && selectedIndex < configList.size()) {
                 String selectedConfig = configList.get(selectedIndex);
-                V2rayController.ConnectionState state = V2rayController.getConnectionState();
-
-                if (state == V2rayController.ConnectionState.DISCONNECTED) {
-                    V2rayController.startV2ray(this, "Golden", selectedConfig, null);
-                } else {
-                    V2rayController.stopV2ray(this);
-                }
+                if (V2rayController.getConnectionState() == CONNECTION_STATES.DISCONNECTED) {
+                V2rayController.startV2ray(this, "Dynamic", selectedConfig, null);
             } else {
-                Toast.makeText(this, "سروری انتخاب نشده", Toast.LENGTH_SHORT).show();
+                V2rayController.stopV2ray(this);
             }
         });
     }
