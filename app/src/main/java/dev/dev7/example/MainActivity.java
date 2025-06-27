@@ -47,19 +47,20 @@ public class MainActivity extends AppCompatActivity {
         btnUpdateConfig.setOnClickListener(view -> fetchConfigs());
 
         btnConnection.setOnClickListener(view -> {
-            int selectedIndex = serverSelector.getSelectedItemPosition();
-            if (selectedIndex >= 0 && selectedIndex < configList.size()) {
-                String selectedConfig = configList.get(selectedIndex);
-                if (V2rayController.getConnectionState() == 0) {
-                    V2rayController.startV2ray(this, "Golden", selectedConfig, null);
-                } else {
-                    V2rayController.stopV2ray(this);
-                }
-            } else {
-                Toast.makeText(this, "سروری انتخاب نشده", Toast.LENGTH_SHORT).show();
-            }
-        });
+    int selectedIndex = serverSelector.getSelectedItemPosition();
+    if (selectedIndex >= 0 && selectedIndex < configList.size()) {
+        String selectedConfig = configList.get(selectedIndex);
+        ConnectionState state = V2rayController.getConnectionState();
+
+        if (state == ConnectionState.DISCONNECTED) {
+            V2rayController.startV2ray(this, "Golden", selectedConfig, null);
+        } else {
+            V2rayController.stopV2ray(this);
+        }
+    } else {
+        Toast.makeText(this, "سروری انتخاب نشده", Toast.LENGTH_SHORT).show();
     }
+});
 
     private void fetchConfigs() {
         String key = keyInput.getText().toString().trim();
