@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
             int selectedIndex = serverSelector.getSelectedItemPosition();
             if (selectedIndex >= 0 && selectedIndex < configList.size()) {
                 String selectedConfig = configList.get(selectedIndex);
-                if (V2rayController.getConnectionState() == V2rayController.CONNECTION_STATES.DISCONNECTED) {
+                if (V2rayController.getConnectionState() == 0) {
                     V2rayController.startV2ray(this, "Golden", selectedConfig, null);
                 } else {
                     V2rayController.stopV2ray(this);
