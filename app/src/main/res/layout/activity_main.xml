@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
-    tools:context=".MainActivity">
+    android:background="#121212">
 
     <LinearLayout
         android:id="@+id/connection_info_layout"
@@ -16,160 +14,43 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="اینترنت رایگان همراه اول"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textColor="#BB86FC"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="کلید خود را وارد کنید :"
+            android:text="کلید اشتراک را وارد کنید:"
             android:textSize="14sp"
             android:textColor="#FFFFFF" />
 
         <EditText
-            android:id="@+id/uuid_input"
+            android:id="@+id/key_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:background="@android:drawable/edit_text"
-            android:hint="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            android:hint="مثال: QWxuYSwxNzUwMTE3MzE2-TsSO5orak"
             android:inputType="textVisiblePassword"
-            android:maxLength="36"
             android:textColor="#000000"
             android:textColorHint="#AAAAAA"
-            android:textSize="14sp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="12dp"
-            android:visibility="gone">
-
-            <TextView android:id="@+id/connection_mode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="4dp"
-                android:text="connection mode : VPN_TUN"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
-
-            <TextView android:id="@+id/server_delay"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="4dp"
-                android:text="server delay : tap to test"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
-
-            <TextView android:id="@+id/connected_server_delay"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="4dp"
-                android:text="connected server delay : wait for connection"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
-
-            <TextView android:id="@+id/connection_duration"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="4dp"
-                android:text="connection time : 00:00:00"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
-
-            <TextView android:id="@+id/connection_speed"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="4dp"
-                android:text="connection speed : 0 B/s | 0 B/s"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
-
-            <TextView android:id="@+id/connection_traffic"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="4dp"
-                android:text="connection traffic : 0 B | 0 B"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="12dp"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="سرور مورد نظر را انتخاب کنید:"
-                android:textSize="14sp"
-                android:layout_marginEnd="8dp" />
-
-            <Spinner
-                android:id="@+id/server_selector"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:entries="@array/server_options"/>
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/btn_connection"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="اتصال / قطع اتصال"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#03DAC5" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:textColor="#CCCCCC"
-            android:textSize="13sp"
-            android:lineSpacingExtra="4dp"
-            android:text="• با زدن دکمه اتصال اینترنت شما برای اینترنت همراه اول رایگان خواهد شد..."/>
-
-        <Button
-            android:id="@+id/btn_subscribe"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="خرید اشتراک"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#BB86FC" />
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/btn_update_config"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="آپدیت سرورها"
-            android:layout_marginTop="16dp"/>
+            android:text="دریافت لیست سرورها"
+            android:layout_marginTop="12dp" />
 
-        <TextView
-            android:id="@+id/core_version"
-            android:layout_width="wrap_content"
+        <Spinner
+            android:id="@+id/server_selector"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Core Version"
-            android:visibility="gone" />
+            android:layout_marginTop="16dp" />
+
+        <Button
+            android:id="@+id/btn_connection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="اتصال / قطع اتصال"
+            android:textSize="16sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#03DAC5" />
     </LinearLayout>
 </ScrollView>
